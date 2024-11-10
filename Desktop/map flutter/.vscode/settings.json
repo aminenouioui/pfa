@@ -1,0 +1,7 @@
+{
+    "cmake.sourceDirectory": "C:/Users/asmaa/Desktop/map flutter/mapappliation/linux",
+    "cmake.generator": "Ninja",  // Use an appropriate generator like Ninja or Unix Makefiles
+    "cmake.buildDirectory": "build",
+    "java.configuration.updateBuildConfiguration": "interactive"
+}
+
