@@ -1,0 +1,24 @@
+name: iot_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_dotenv: ^5.2.1
+  flutter_map: ^7.0.2
+  geolocator: ^9.0.2    # Add the latest geolocator version
+  http: ^1.2.2         # Add the latest HTTP package version
+  intl: ^0.17.0         # Add the intl package for date formatting
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
