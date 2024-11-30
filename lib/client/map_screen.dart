@@ -26,7 +26,7 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? _mylocation;
   LatLng? _draggedPosition;
   bool _isDragging = false;
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   List<dynamic> _searchResults = [];
   bool _isSearching = false;
   
@@ -85,12 +85,12 @@ class _MapScreenState extends State<MapScreen> {
             mainAxisSize: MainAxisSize.min, // Ensure the column takes minimum space
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                constraints: BoxConstraints(maxWidth: 80), // Limit width to avoid overflow
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                constraints: const BoxConstraints(maxWidth: 80), // Limit width to avoid overflow
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                       color: Colors.black,
                       blurRadius: 4,
@@ -100,14 +100,14 @@ class _MapScreenState extends State<MapScreen> {
                 ),
                 child: Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                   overflow: TextOverflow.ellipsis, // Truncate if text is too long
                 ),
               ),
-              Icon(
+              const Icon(
                 Icons.location_on,
                 color: Colors.redAccent,
                 size: 40,
@@ -129,17 +129,17 @@ class _MapScreenState extends State<MapScreen> {
     showDialog(
       context: context,
        builder: (context) => AlertDialog(
-        title: Text('Add Marker'),
+        title: const Text('Add Marker'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: titleController,
-              decoration: InputDecoration(labelText: "Title"),
+              decoration: const InputDecoration(labelText: "Title"),
             ),
             TextField(
               controller: descController,
-              decoration: InputDecoration(labelText: "Description"),
+              decoration: const InputDecoration(labelText: "Description"),
             ),
           ],
         ),
@@ -148,14 +148,14 @@ class _MapScreenState extends State<MapScreen> {
             onPressed: (){
               Navigator.pop(context);
             },
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: (){
               _addMarker(position, titleController.text, descController.text);
               Navigator.pop(context);
             },
-            child: Text('Save'),
+            child: const Text('Save'),
           ),
         ],
        )
@@ -191,13 +191,13 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
               ),
             ),
             const SizedBox(height: 20),
-            Center(
+            const Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: 20),
-                    const HumidityCard(),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20),
+                    HumidityCard(),
+                    SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -298,7 +298,7 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: LatLng(36.8065, 10.1815), // Coordinates for Tunis, Tunisia
+              initialCenter: const LatLng(36.8065, 10.1815), // Coordinates for Tunis, Tunisia
               initialZoom: 13.0,
               onTap: (tapPosition, LatLng) {
                 _selectedPosition = LatLng;
@@ -317,7 +317,7 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
                   width: 80,
                   height: 80,
                   point: _draggedPosition!,
-                  child: Icon(Icons.location_on,
+                  child: const Icon(Icons.location_on,
                   color: Colors.indigo,
                   size: 40,
                   )
@@ -330,7 +330,7 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
                   width: 80,
                   height: 80,
                   point: _mylocation!,
-                  child: Icon(Icons.location_on,
+                  child: const Icon(Icons.location_on,
                   color: Colors.green,
                   size: 40,
                   )
@@ -359,14 +359,14 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
                       borderRadius: BorderRadius.circular(50),
                       borderSide : BorderSide.none,
                     ),
-                    prefixIcon: Icon(Icons.search),
+                    prefixIcon: const Icon(Icons.search),
                     suffixIcon: _isSearching ? IconButton(onPressed: (){
                       _searchController.clear();
                       setState(() {
                         _isSearching = false;
                         _searchResults = [];
                       });
-                    }, icon: Icon(Icons.clear)):null
+                    }, icon: const Icon(Icons.clear)):null
                   ),
                   onTap: () {
                     setState(() {
@@ -409,7 +409,7 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
                 _isDragging = true;
               });
             },
-            child: Icon(Icons.add_location),
+            child: const Icon(Icons.add_location),
           ),
         ) : Positioned(
           bottom: 20,
@@ -422,7 +422,7 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
                 _isDragging = false;
               });
             },
-            child: Icon(Icons.wrong_location),
+            child: const Icon(Icons.wrong_location),
           ),
         ), 
         Positioned(
@@ -434,10 +434,10 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.indigo,
                 onPressed: _showCurrentLocation,
-                child: Icon(Icons.location_searching_rounded),
+                child: const Icon(Icons.location_searching_rounded),
           ), 
           if(_isDragging)
-          Padding(padding: EdgeInsets.only(top: 20),
+          Padding(padding: const EdgeInsets.only(top: 20),
            child: FloatingActionButton(
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
@@ -450,7 +450,7 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
                 _draggedPosition = null;
               });
             },
-            child: Icon(Icons.check),
+            child: const Icon(Icons.check),
             ), 
           )
             ],

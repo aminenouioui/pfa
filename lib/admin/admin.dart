@@ -1,50 +1,44 @@
 import 'package:flutter/material.dart';
 
-class GestionUtilisateur extends StatelessWidget {
-  const GestionUtilisateur({super.key});
+class AdminPage extends StatelessWidget {
+  const AdminPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          color: Colors.black,
-        ),
         title: const Text(
-          'Users',
+          'Admin Panel',
           style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.normal,
+            color: Colors.green,
+            fontWeight: FontWeight.bold,
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.arrow_forward),
+            onPressed: () {},
+            color: Colors.black,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             CustomButton(
-              icon: Icons.add,
-              text: 'Add New User',
+              icon: Icons.group,
+              text: 'Utilisateurs',
               onTap: () {
+                // Navigate to the GestionUtilisateur page
                 Navigator.pushNamed(
-                  context,'/useraddform');
+                  context,'/gestion');
               },
             ),
             const SizedBox(height: 16),
-            CustomButton(
-              icon: Icons.add,
-              text: 'Liste Users',
-              onTap: () {
-                Navigator.pushNamed(
-                  context,'/userlist');
-              },
-            ),
           ],
         ),
       ),

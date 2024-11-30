@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+/*import 'package:flutter/material.dart';
 import 'package:projet/admin/useraddform.dart' as form;
 
 import 'gestionutilisateurs.dart'; // Replace with your actual page for /gestion route
@@ -12,7 +12,7 @@ class AdminDashboard extends StatefulWidget {
 
 class _AdminDashboardState extends State<AdminDashboard> {
   // To track which screen is being shown in the body
-  Widget _currentScreen = GestionUtilisateur();  // Default screen
+  Widget _currentScreen = const GestionUtilisateur();  // Default screen
 
   // Method to change the current screen
   void _updateScreen(Widget screen) {
@@ -60,7 +60,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               onTap: () {
                 // Close the drawer and update the screen to GestionUtilisateur
                 Navigator.pop(context); 
-                _updateScreen(GestionUtilisateur());
+                _updateScreen(const GestionUtilisateur());
               },
             ),
             // Add User Option
@@ -115,3 +115,4 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
+*/
