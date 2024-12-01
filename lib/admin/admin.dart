@@ -1,7 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:projet/admin/useraddform.dart' as form;
+import 'gestionutilisateurs.dart';
 
-class AdminPage extends StatelessWidget {
+class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
+
+  @override
+  _AdminPageState createState() => _AdminPageState();
+}
+
+class _AdminPageState extends State<AdminPage> {
+  // Default body widget
+  Widget _currentScreen = const GestionUtilisateur(); // Default screen
+
+  // Method to update the body content dynamically
+  void _updateScreen(Widget screen) {
+    setState(() {
+      _currentScreen = screen;
+    });
+  }
+
+  // Logout function
+  void _logout(BuildContext context) {
+    Navigator.pushNamedAndRemoveUntil(context, '/Login', (route) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,63 +38,79 @@ class AdminPage extends StatelessWidget {
         ),
         backgroundColor: Colors.white,
         elevation: 0,
-        automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.arrow_forward),
-            onPressed: () {},
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              _logout(context);
+            },
             color: Colors.black,
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            CustomButton(
-              icon: Icons.group,
-              text: 'Utilisateurs',
+      // Drawer for navigation
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.green,
+              ),
+              child: Text(
+                'Admin Menu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.group),
+              title: const Text('Manage Users'),
               onTap: () {
-                // Navigate to the GestionUtilisateur page
-                Navigator.pushNamed(
-                  context,'/gestion');
+                Navigator.pop(context);
+                _updateScreen(const GestionUtilisateur());
               },
             ),
-            const SizedBox(height: 16),
+            ListTile(
+              leading: const Icon(Icons.person_add),
+              title: const Text('Add User'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateScreen(const form.UserAdd());
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateScreen(const SettingsPage());
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                _logout(context);
+              },
+            ),
           ],
         ),
       ),
+      body: _currentScreen, // Display the selected screen
     );
   }
 }
 
-class CustomButton extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final VoidCallback onTap; // Add onTap callback
-
-  const CustomButton({
-    super.key,
-    required this.icon,
-    required this.text,
-    required this.onTap, // Require the onTap parameter
-  });
+class SettingsPage extends StatelessWidget {
+  const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector( // Use GestureDetector to detect taps
-      onTap: onTap, // Call the onTap callback when tapped
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.black12),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: ListTile(
-          leading: Icon(icon),
-          title: Text(text),
-          trailing: const Icon(Icons.arrow_forward_ios),
-        ),
-      ),
+    return const Scaffold(
+      body: Center(child: Text('Settings Screen')),
     );
   }
 }

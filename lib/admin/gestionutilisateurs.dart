@@ -6,24 +6,7 @@ class GestionUtilisateur extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          color: Colors.black,
-        ),
-        title: const Text(
-          'Users',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.normal,
-          ),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
+      
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
