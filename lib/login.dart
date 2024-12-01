@@ -1,42 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+ 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
+ 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
-
+ 
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
+ 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-
-  // Login function using email and password
+ 
+  // Login function with role-based navigation
   Future<void> _loginWithEmail() async {
     try {
-      await _auth.signInWithEmailAndPassword(
-        email: emailController.text,
-        password: passwordController.text,
+      // Authenticate user with Firebase Auth
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
       );
-      // After successful login, navigate to the admin page
-      Navigator.pushNamed(context, '/admin');
+ 
+      // Retrieve user email
+      final userEmail = userCredential.user?.email?.trim().toLowerCase();
+ 
+      // Query Firestore to find the user by email
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: userEmail) // Match the email field
+          .get();
+ 
+      if (querySnapshot.docs.isNotEmpty) {
+        final userDoc = querySnapshot.docs.first; // Get the first matching document
+        final role = userDoc.data()['role']; // Extract the role field
+ 
+        if (role == 'Admin') {
+          // Navigate to admin screen
+          Navigator.pushReplacementNamed(context, '/admin');
+        } else if (role == 'Client') {
+          // Navigate to client screen
+          Navigator.pushReplacementNamed(context, '/ClientDashboard');
+        } else {
+          // Handle unknown roles
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Role not recognized.')),
+          );
+        }
+      } else {
+        // No user document found
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User data not found in Firestore.')),
+        );
+      }
     } on FirebaseAuthException catch (e) {
+      // Handle login errors
       String errorMessage = '';
       if (e.code == 'user-not-found') {
         errorMessage = 'No user found for that email.';
       } else if (e.code == 'wrong-password') {
         errorMessage = 'Wrong password provided.';
       } else {
-        errorMessage = e.message ?? 'Something went wrong';
+        errorMessage = e.message ?? 'Something went wrong.';
       }
-      // Show error message in SnackBar
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(errorMessage)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
+      );
     }
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,11 +115,11 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: passwordController,
               obscureText: true,
               decoration: InputDecoration(
-                hintText: '••••••',
+                hintText: '',
                 prefixIcon: const Icon(Icons.lock),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.visibility),
-                  onPressed: () {}, // Add password visibility logic
+                  onPressed: () {}, // Add password visibility toggle logic here
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -107,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             // Confirm Button
             ElevatedButton(
-              onPressed: _loginWithEmail,  // Call login function on button press
+              onPressed: _loginWithEmail, // Call the login function
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal,
                 minimumSize: const Size(double.infinity, 50),
@@ -124,7 +158,8 @@ class _LoginScreenState extends State<LoginScreen> {
             // Create New Account Button
             OutlinedButton.icon(
               onPressed: () {
-                // Navigate to the sign-up page (you can create a registration page if you want)
+                // Navigate to sign-up screen
+                Navigator.pushNamed(context, '/signup');
               },
               icon: const Icon(Icons.person_add, color: Colors.teal),
               label: const Text(

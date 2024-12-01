@@ -20,10 +20,8 @@ class _ClientDashboardState extends State<ClientDashboard> {
   }
 
   void _logout(BuildContext context) {
-    // Pop all routes and navigate to the root (LoginScreen)
-    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    Navigator.pushNamedAndRemoveUntil(context, '/Login', (route) => false);
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(

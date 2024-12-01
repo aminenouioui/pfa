@@ -1,26 +1,26 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-
+ 
 import 'package:projet/admin/admin.dart';
 import 'package:projet/admin/useraddform.dart';
 import 'package:projet/admin/userlist.dart';
 import 'package:projet/client/ClientDashboard.dart';
 import 'package:projet/admin/gestionutilisateurs.dart';
-
+ 
 import 'package:projet/login.dart';
-
+ 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Initialize Firebase
-
+ 
   runApp(const MainApp());
 }
-
-
+ 
+ 
 class MainApp extends StatelessWidget {
-
+ 
   const MainApp({super.key});
-
+ 
   @override
   Widget build(BuildContext context) {
     return  MaterialApp(
@@ -33,6 +33,7 @@ class MainApp extends StatelessWidget {
         '/gestion' :(context) => const GestionUtilisateur(),
         '/useraddform' : (context) => const UserAdd(),
         '/userlist' : (context) => const UserListScreen(),
+        '/ClientDashboard' : (context) => const ClientDashboard(),
       },
     );
   }
