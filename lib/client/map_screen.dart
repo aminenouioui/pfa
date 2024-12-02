@@ -75,7 +75,7 @@ class _MapScreenState extends State<MapScreen> {
 
 
 
-void _addMarker(LatLng position, String title, String description) async {
+Future<void> _addMarker(LatLng position, String title, String description) async {
   final user = FirebaseAuth.instance.currentUser;
 
   if (user == null) {
@@ -83,59 +83,14 @@ void _addMarker(LatLng position, String title, String description) async {
     return;
   }
 
-  setState(() {
-    final markerData = MarkerData(
-      position: position,
-      title: title,
-      description: description,
-    );
-    _markerData.add(markerData);
-    _markers.add(
-      Marker(
-        point: position,
-        width: 80,
-        height: 80,
-        child: GestureDetector(
-          onTap: () => _showMarkerInfo(context, markerData),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                constraints: const BoxConstraints(maxWidth: 80),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Icon(
-                Icons.location_on,
-                color: Colors.redAccent,
-                size: 40,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  });
+  // Create a MarkerData instance
+  final markerData = MarkerData(
+    position: position,
+    title: title,
+    description: description,
+  );
 
-  // Save marker to Firestore with user ID
+  // Save marker data to Firestore
   try {
     await FirebaseFirestore.instance
         .collection('users')
@@ -148,7 +103,56 @@ void _addMarker(LatLng position, String title, String description) async {
       'longitude': position.longitude,
       'timestamp': FieldValue.serverTimestamp(),
     });
+
     print("Marker saved to Firestore under user's account");
+
+    // Add the marker to the UI immediately
+    setState(() {
+      _markerData.add(markerData);
+      _markers.add(
+        Marker(
+          point: position,
+          width: 80,
+          height: 80,
+          child: GestureDetector(
+            onTap: () => _showMarkerInfo(context, markerData),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  constraints: const BoxConstraints(maxWidth: 80),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const Icon(
+                  Icons.location_on,
+                  color: Colors.redAccent,
+                  size: 40,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    });
   } catch (e) {
     print("Error saving marker to Firestore: $e");
   }
@@ -403,8 +407,9 @@ void _editMarker(MarkerData markerData, String newTitle, String newDescription) 
 @override
 void initState() {
   super.initState();
-  _loadMarkers();
+  _loadMarkers(); // Load markers when the screen is initialized
 }
+
 
 void _loadMarkers() async {
   final user = FirebaseAuth.instance.currentUser;
@@ -415,6 +420,7 @@ void _loadMarkers() async {
   }
 
   try {
+    // Fetch markers from Firestore for the current user
     final snapshot = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -422,6 +428,9 @@ void _loadMarkers() async {
         .get();
 
     setState(() {
+      _markerData.clear();  // Clear previous markers
+      _markers.clear();     // Clear the map markers
+
       for (var doc in snapshot.docs) {
         final data = doc.data();
         final markerData = MarkerData(
@@ -476,11 +485,13 @@ void _loadMarkers() async {
         );
       }
     });
+
     print("Markers loaded for the user");
   } catch (e) {
     print("Error loading markers: $e");
   }
 }
+
 
 
 
