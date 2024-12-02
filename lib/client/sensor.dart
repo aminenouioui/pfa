@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';  // Firebase Firestore
 import 'package:projet/client/chart.dart';
 
 import 'reservoir.dart';  // For charts
-
+import 'package:firebase_database/firebase_database.dart';
 class HumidityCard extends StatefulWidget {
   const HumidityCard({super.key});
 
@@ -17,11 +17,19 @@ class _HumidityCardState extends State<HumidityCard> {
   int _humidity = 0; // Default humidity value
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
+  
   @override
   void initState() {
     super.initState();
     // Listen for real-time updates on the Firestore collection
     _listenToHumidityData();
+    _dbRef.child('reservoir').onValue.listen((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>;
+      setState(() {
+        reservoirPercentage = data['percentage'] ?? 100;
+        status = data['status'] ?? 0;
+      });
+    });
   }
 
   // Real-time listener for humidity data in Firestore
@@ -136,6 +144,32 @@ void _sendTimingToFirestore(String markerId) async {
   }
 }
 
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.ref(); // Use `ref` instead of `reference`
+  int reservoirPercentage = 100; // Default value
+  int status = 0; // Default status
+  // Function to send the status to Firebase
+  void _sendArroserStatus(int status) {
+    _dbRef.child('arroser/status').set(status).then((_) {
+      print("Status set to $status");
+    }).catchError((error) {
+      print("Failed to set status: $error");
+    });
+  }
+// Toggle status in Firebase
+  void toggleStatus() {
+    int newStatus = (status == 0) ? 1 : 0;
+    _dbRef.child('reservoir').update({'status': newStatus});
+  }
+  void updateStatus(int newStatus) {
+    DatabaseReference ref = FirebaseDatabase.instance.ref('reservoir');
+    ref.update({'status': newStatus}).then((_) {
+      print("Status updated to $newStatus");
+    }).catchError((error) {
+      print("Failed to update status: $error");
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -176,41 +210,21 @@ void _sendTimingToFirestore(String markerId) async {
         // Buttons
         Column(
           children: [
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () {
-                print("Arroser pressed");
-              },
-              icon: const Icon(Icons.water, color: Colors.white),
-              label: const Text(
-                "Arroser",
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
+             Text(
+              "Reservoir Percentage: $reservoirPercentage%",
+              style: TextStyle(fontSize: 20),
             ),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              onPressed: () {
-                print("Stop Arroser pressed");
-              },
-              icon: const Icon(Icons.stop, color: Colors.white),
-              label: const Text(
-                "Stop Arroser",
-                style: TextStyle(fontSize: 16, color: Colors.white),
-              ),
+            SizedBox(height: 20),
+            Text(
+              "Status: ${status == 0 ? 'Stopped' : 'Watering'}",
+              style: TextStyle(fontSize: 20, color: status == 0 ? Colors.red : Colors.green),
             ),
+            SizedBox(height: 40),
+            ElevatedButton(
+              onPressed: toggleStatus,
+              child: Text(status == 0 ? "Start Watering" : "Stop Watering"),
+            ),
+            
           ],
         ),
         const SizedBox(height: 20),
