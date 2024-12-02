@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:projet/client/reservoir.dart';
 import 'weather.dart';
 import 'map_screen.dart';
-import 'chat.dart';
 
 class ClientDashboard extends StatefulWidget {
   @override
@@ -77,24 +76,13 @@ class _ClientDashboardState extends State<ClientDashboard> {
                 _logout(context); // Close the drawer
               },
             ),
-ListTile(
-              leading: const Icon(Icons.chat),
-              title: const Text('Chat with Bot'),
-              onTap: () {
-                Navigator.pop(context); 
-                // Navigate to ChatScreen
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ChatScreen()),
-                );
-              },
-            ),
-                        ListTile(
-              leading: const Icon(Icons.logout),
+
+            ListTile(
+              leading: const Icon(Icons.add_box_sharp),
               title: const Text('reservoir'),
               onTap: () {
                 // Handle logout functionality here
-                ReservoirPage(); // Close the drawer
+                _updateScreen( ReservoirPage());// Close the drawer
               },
             ),
           ],

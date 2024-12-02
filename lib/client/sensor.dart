@@ -1,4 +1,5 @@
 import 'dart:convert';  // For JSON parsing
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';  // Firebase Firestore
 import 'package:charts_flutter/flutter.dart' as charts;
@@ -14,7 +15,8 @@ class HumidityCard extends StatefulWidget {
 
 class _HumidityCardState extends State<HumidityCard> {
   int _humidity = 0; // Default humidity value
-
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
   @override
   void initState() {
     super.initState();
@@ -58,12 +60,89 @@ class _HumidityCardState extends State<HumidityCard> {
     });
   }
 
+ Future<void> _selectTime(BuildContext context, bool isStart) async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+
+    if (pickedTime != null) {
+      setState(() {
+        if (isStart) {
+          _startTime = pickedTime;
+        } else {
+          _endTime = pickedTime;
+        }
+      });
+    }
+  }
+
+
+
+void _sendTimingToFirestore(String markerId) async {
+  // Retrieve the currently logged-in user's ID
+  final User? user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("User not logged in."),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  final userId = user.uid; // Get the logged-in user's ID
+
+  if (_startTime == null || _endTime == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Please select both start and end times."),
+        backgroundColor: Colors.red,
+      ),
+    );
+    return;
+  }
+
+  try {
+    // Save timing data to Firestore under the user's account and specific marker
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId) // User document
+        .collection('markers')
+        .doc(markerId) // Marker document
+        .collection('irrigation_timing') // Timing subcollection
+        .add({
+      'start_time': _startTime!.format(context), // Format time for better readability
+      'end_time': _endTime!.format(context),
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Timing saved successfully!"),
+        backgroundColor: Colors.green,
+      ),
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Error saving timing: $e"),
+        backgroundColor: Colors.red,
+      ),
+    );
+    print("Error saving timing: $e");
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
+        const Text(
           'Humidity',
           style: TextStyle(
             fontSize: 18,
@@ -82,13 +161,132 @@ class _HumidityCardState extends State<HumidityCard> {
               radius: 50,
               backgroundColor: Colors.blue,
               child: Text(
-                '$_humidity%',  // Display humidity dynamically
+                '$_humidity%', // Display humidity dynamically
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // Buttons
+        Column(
+          children: [
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                print("Arroser pressed");
+              },
+              icon: const Icon(Icons.water, color: Colors.white),
+              label: const Text(
+                "Arroser",
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () {
+                print("Stop Arroser pressed");
+              },
+              icon: const Icon(Icons.stop, color: Colors.white),
+              label: const Text(
+                "Stop Arroser",
+                style: TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // Timing Zone
+        Card(
+          elevation: 4.0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              children: [
+                const Text(
+                  "Set Irrigation Timing",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueAccent,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.access_time, size: 30, color: Colors.green),
+                          onPressed: () => _selectTime(context, true),
+                        ),
+                        Text(
+                          _startTime == null
+                              ? "Start Time"
+                              : _startTime!.format(context),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.access_time_filled, size: 30, color: Colors.red),
+                          onPressed: () => _selectTime(context, false),
+                        ),
+                        Text(
+                          _endTime == null
+                              ? "End Time"
+                              : _endTime!.format(context),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  onPressed: () {
+                    const userId = "exampleUserId"; // Replace with actual user ID
+                    _sendTimingToFirestore(userId); // Call the function with userId
+                  },
+                  child: const Text(
+                    "Send Timing",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+
+              ],
             ),
           ),
         ),
@@ -215,7 +413,7 @@ class _CptPageState extends State<CptPage> {
             label: 'History',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+            icon: Icon(Icons.add_box_sharp),
             label: 'ReservoirPage',
           ),
         ],

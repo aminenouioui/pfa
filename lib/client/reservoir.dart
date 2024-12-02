@@ -1,3 +1,4 @@
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 
 class ReservoirPage extends StatefulWidget {
@@ -6,7 +7,23 @@ class ReservoirPage extends StatefulWidget {
 }
 
 class _RealReservoirPageState extends State<ReservoirPage> {
-  double waterPercentage = 75; // Example starting percentage.
+  double waterPercentage = 75; // Initial value, will be updated from Firebase
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize Firebase
+    FirebaseDatabase.instance.ref().child('reservoir/percentage').onValue.listen((event) {
+      final data = event.snapshot.value;
+      if (data != null) {
+        setState(() {
+          // Cast the data to num and then convert it to double
+          waterPercentage = (data as num).toDouble();
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +82,7 @@ class _RealReservoirPageState extends State<ReservoirPage> {
               ],
             ),
             const SizedBox(height: 40),
-            // Slider to Simulate Changes
+            // Slider to Simulate Changes (Optional)
             Slider(
               value: waterPercentage,
               min: 0,
@@ -84,4 +101,3 @@ class _RealReservoirPageState extends State<ReservoirPage> {
     );
   }
 }
-

@@ -155,12 +155,165 @@ void _addMarker(LatLng position, String title, String description) async {
 }
 
 
-    void _deleteMarker(MarkerData markerData) {
-    setState(() {
-      _markerData.remove(markerData);
-      _markers.removeWhere((marker) => marker.point == markerData.position);
-    });
+void _deleteMarker(MarkerData markerData) async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    print("No user logged in. Cannot delete marker.");
+    return;
   }
+
+  try {
+    // Query Firestore to find the marker document to delete
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('markers')
+        .where('latitude', isEqualTo: markerData.position.latitude)
+        .where('longitude', isEqualTo: markerData.position.longitude)
+        .get();
+
+    for (var doc in querySnapshot.docs) {
+      await doc.reference.delete(); // Delete the document
+    }
+
+    print("Marker deleted from Firestore.");
+  } catch (e) {
+    print("Error deleting marker from Firestore: $e");
+  }
+
+  // Remove the marker from the local state
+  setState(() {
+    _markerData.remove(markerData);
+    _markers.removeWhere((marker) => marker.point == markerData.position);
+  });
+}
+
+
+void _showMarkerInfo(BuildContext context, MarkerData markerData) {
+  final TextEditingController titleController =
+      TextEditingController(text: markerData.title);
+  final TextEditingController descController =
+      TextEditingController(text: markerData.description);
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) => AlertDialog(
+      title: const Text("Marker Info"),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                labelText: "Title",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: descController,
+              decoration: const InputDecoration(
+                labelText: "Description",
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Row with Close, Save, and Delete buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close the dialog
+                  },
+                  child: const Text('Close'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _editMarker(markerData, titleController.text,
+                        descController.text); // Save changes
+                    Navigator.pop(context); // Close the dialog after editing
+                  },
+                  child: const Text('Save'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    _deleteMarker(markerData); // Delete the marker
+                    Navigator.pop(context); // Close the dialog
+                  },
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10), // Space between buttons
+            // More About button
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(elevation: 10),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (BuildContext context) => const CptPage(),
+                  ),
+                );
+              },
+              child: const Text("More About"),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+void _editMarker(MarkerData markerData, String newTitle, String newDescription) async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    print("No user logged in. Cannot edit marker.");
+    return;
+  }
+
+  try {
+    // Query Firestore to find the marker document to update
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('markers')
+        .where('latitude', isEqualTo: markerData.position.latitude)
+        .where('longitude', isEqualTo: markerData.position.longitude)
+        .get();
+
+    for (var doc in querySnapshot.docs) {
+      await doc.reference.update({
+        'title': newTitle,
+        'description': newDescription,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    }
+
+    print("Marker updated in Firestore.");
+  } catch (e) {
+    print("Error updating marker in Firestore: $e");
+  }
+
+  // Update the marker in the local state
+  setState(() {
+    markerData.title = newTitle;
+    markerData.description = newDescription;
+  });
+}
+
+
 
   void _showMarkerDialog(BuildContext context, LatLng position){
     final TextEditingController titleController = TextEditingController();
@@ -213,139 +366,6 @@ void handleMarkerClick(String title, String description) {
 
   // You can add additional logic here, like navigating to a new screen or updating the UI
 }
-
-
-
-
-
-void _showMarkerInfo(BuildContext context, MarkerData markerData) {
-  final TextEditingController titleController = TextEditingController(text: markerData.title);
-  final TextEditingController descController = TextEditingController(text: markerData.description);
-
-  showDialog(
-    context: context,
-    builder: (BuildContext context) => AlertDialog(
-      title: Text(markerData.title),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              markerData.description,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 20),
-            const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(height: 20),
-                  HumidityCard(),
-                  SizedBox(height: 20),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(elevation: 10),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (BuildContext context) => const CptPage(),
-                  ),
-                );
-              },
-              child: const Text("More About"),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        // Close button
-        TextButton(
-          onPressed: () {
-            Navigator.pop(context); // Close the dialog
-          },
-          child: const Text('Close'),
-        ),
-        // Edit button
-        TextButton(
-          onPressed: () {
-            _editMarker(markerData, titleController.text, descController.text);
-            Navigator.pop(context); // Close the dialog after editing
-          },
-          child: const Text('Edit'),
-        ),
-        // Delete button
-        TextButton(
-          onPressed: () {
-            _deleteMarker(markerData); // Delete the marker
-            Navigator.pop(context); // Close the dialog
-          },
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
-  );
-}
-void _editMarker(MarkerData markerData, String newTitle, String newDescription) {
-  setState(() {
-    markerData.title = newTitle; // Update the title
-    markerData.description = newDescription; // Update the description
-    // Rebuild the markers to reflect the changes
-    _markers.clear(); // Clear the existing markers
-    for (var marker in _markerData) {
-      _markers.add(
-        Marker(
-          point: marker.position,
-          width: 80,
-          height: 80,
-          child: GestureDetector(
-            onTap: () => _showMarkerInfo(context, marker), // Show the updated marker info
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  constraints: const BoxConstraints(maxWidth: 80), // Limit width to avoid overflow
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
-                      )
-                    ],
-                  ),
-                  child: Text(
-                    marker.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
-                    ),
-                    overflow: TextOverflow.ellipsis, // Truncate if text is too long
-                  ),
-                ),
-                const Icon(
-                  Icons.location_on,
-                  color: Colors.redAccent,
-                  size: 40,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-  });
-}
-
 
 
 
