@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-
 import 'package:projet/admin/admin.dart';
 import 'package:projet/admin/useraddform.dart';
 import 'package:projet/admin/userlist.dart';
@@ -12,8 +11,31 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); // Initialize Firebase
 
+  // Initialize the local notifications plugin
+  
+  
+  // Set up Firebase messaging for background/foreground notifications
+
   runApp(const MainApp());
 }
+
+
+
+// Initialize the local notifications plugin
+
+// Background handler for Firebase Messaging
+
+
+// Function to handle notification click (when the app is in the background or closed)
+Future<void> onSelectNotification(String? payload) async {
+  if (payload != null) {
+    print('Notification payload: $payload');
+    // Example: Navigate to a specific page
+    // Navigator.pushNamed(context, '/specificPage');
+  }
+}
+
+// Function to show a notification
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});

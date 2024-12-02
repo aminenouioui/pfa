@@ -23,6 +23,7 @@ class _ClientDashboardState extends State<ClientDashboard> {
   void _logout(BuildContext context) {
     Navigator.pushNamedAndRemoveUntil(context, '/Login', (route) => false);
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,6 +68,14 @@ class _ClientDashboardState extends State<ClientDashboard> {
                 _updateScreen(const WeatherScreen());
               },
             ),
+            ListTile(
+              leading: const Icon(Icons.add_box_sharp),
+              title: const Text('reservoir'),
+              onTap: () {
+                // Handle logout functionality here
+                _updateScreen( ReservoirPage());// Close the drawer
+              },
+            ),
             // You can add more items here
             ListTile(
               leading: const Icon(Icons.logout),
@@ -77,14 +86,7 @@ class _ClientDashboardState extends State<ClientDashboard> {
               },
             ),
 
-            ListTile(
-              leading: const Icon(Icons.add_box_sharp),
-              title: const Text('reservoir'),
-              onTap: () {
-                // Handle logout functionality here
-                _updateScreen( ReservoirPage());// Close the drawer
-              },
-            ),
+            
           ],
         ),
       ),

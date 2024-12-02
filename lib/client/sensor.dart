@@ -2,7 +2,7 @@ import 'dart:convert';  // For JSON parsing
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';  // Firebase Firestore
-import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:projet/client/chart.dart';
 
 import 'reservoir.dart';  // For charts
 
@@ -295,57 +295,7 @@ void _sendTimingToFirestore(String markerId) async {
   }
 }
 
-class HistoryPage extends StatelessWidget {
-  const HistoryPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            const Text(
-              'Humidity History',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: charts.BarChart(
-                _createSampleData(),
-                animate: true,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static List<charts.Series<HumidityData, String>> _createSampleData() {
-    final data = [
-      HumidityData('Mon', 60),
-      HumidityData('Tue', 65),
-      HumidityData('Wed', 70),
-      HumidityData('Thu', 55),
-      HumidityData('Fri', 75),
-    ];
-
-    return [
-      charts.Series<HumidityData, String>( 
-        id: 'Humidity',
-        colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
-        domainFn: (HumidityData humidity, _) => humidity.day,
-        measureFn: (HumidityData humidity, _) => humidity.value,
-        data: data,
-      ),
-    ];
-  }
-}
 
 class HumidityData {
   final String day;
