@@ -1,5 +1,8 @@
 
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'marker_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -69,24 +72,37 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  void _addMarker(LatLng position, String title, String description){
-    setState(() {
-      final markerData = MarkerData(position: position,title:title,description :
-      description);
-      _markerData.add(markerData);
-      _markers.add(
-        Marker(
-          point: position,
-          width: 80,
-          height: 80,
+
+
+
+void _addMarker(LatLng position, String title, String description) async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    print("No user logged in. Cannot save marker.");
+    return;
+  }
+
+  setState(() {
+    final markerData = MarkerData(
+      position: position,
+      title: title,
+      description: description,
+    );
+    _markerData.add(markerData);
+    _markers.add(
+      Marker(
+        point: position,
+        width: 80,
+        height: 80,
         child: GestureDetector(
-            onTap: () => _showMarkerInfo(context, markerData),
+          onTap: () => _showMarkerInfo(context, markerData),
           child: Column(
-            mainAxisSize: MainAxisSize.min, // Ensure the column takes minimum space
+            mainAxisSize: MainAxisSize.min,
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                constraints: const BoxConstraints(maxWidth: 80), // Limit width to avoid overflow
+                constraints: const BoxConstraints(maxWidth: 80),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
@@ -95,7 +111,7 @@ class _MapScreenState extends State<MapScreen> {
                       color: Colors.black,
                       blurRadius: 4,
                       offset: Offset(0, 2),
-                    )
+                    ),
                   ],
                 ),
                 child: Text(
@@ -104,7 +120,7 @@ class _MapScreenState extends State<MapScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
-                  overflow: TextOverflow.ellipsis, // Truncate if text is too long
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const Icon(
@@ -115,10 +131,34 @@ class _MapScreenState extends State<MapScreen> {
             ],
           ),
         ),
+      ),
+    );
+  });
 
-        ),
-        
-      );
+  // Save marker to Firestore with user ID
+  try {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('markers')
+        .add({
+      'title': title,
+      'description': description,
+      'latitude': position.latitude,
+      'longitude': position.longitude,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+    print("Marker saved to Firestore under user's account");
+  } catch (e) {
+    print("Error saving marker to Firestore: $e");
+  }
+}
+
+
+    void _deleteMarker(MarkerData markerData) {
+    setState(() {
+      _markerData.remove(markerData);
+      _markers.removeWhere((marker) => marker.point == markerData.position);
     });
   }
 
@@ -161,6 +201,10 @@ class _MapScreenState extends State<MapScreen> {
        )
        );
   }
+
+  
+
+  
 // hum.dart
 
 void handleMarkerClick(String title, String description) {
@@ -175,6 +219,9 @@ void handleMarkerClick(String title, String description) {
 
 
 void _showMarkerInfo(BuildContext context, MarkerData markerData) {
+  final TextEditingController titleController = TextEditingController(text: markerData.title);
+  final TextEditingController descController = TextEditingController(text: markerData.description);
+
   showDialog(
     context: context,
     builder: (BuildContext context) => AlertDialog(
@@ -192,16 +239,15 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
             ),
             const SizedBox(height: 20),
             const Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(height: 20),
-                    HumidityCard(),
-                    SizedBox(height: 20),
-                  ],
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(height: 20),
+                  HumidityCard(),
+                  SizedBox(height: 20),
+                ],
               ),
-            
+            ),
             const SizedBox(height: 20),
             ElevatedButton(
               style: ElevatedButton.styleFrom(elevation: 10),
@@ -219,16 +265,89 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
         ),
       ),
       actions: [
+        // Close button
         TextButton(
           onPressed: () {
             Navigator.pop(context); // Close the dialog
           },
           child: const Text('Close'),
         ),
+        // Edit button
+        TextButton(
+          onPressed: () {
+            _editMarker(markerData, titleController.text, descController.text);
+            Navigator.pop(context); // Close the dialog after editing
+          },
+          child: const Text('Edit'),
+        ),
+        // Delete button
+        TextButton(
+          onPressed: () {
+            _deleteMarker(markerData); // Delete the marker
+            Navigator.pop(context); // Close the dialog
+          },
+          child: const Text('Delete'),
+        ),
       ],
     ),
   );
 }
+void _editMarker(MarkerData markerData, String newTitle, String newDescription) {
+  setState(() {
+    markerData.title = newTitle; // Update the title
+    markerData.description = newDescription; // Update the description
+    // Rebuild the markers to reflect the changes
+    _markers.clear(); // Clear the existing markers
+    for (var marker in _markerData) {
+      _markers.add(
+        Marker(
+          point: marker.position,
+          width: 80,
+          height: 80,
+          child: GestureDetector(
+            onTap: () => _showMarkerInfo(context, marker), // Show the updated marker info
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  constraints: const BoxConstraints(maxWidth: 80), // Limit width to avoid overflow
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black,
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      )
+                    ],
+                  ),
+                  child: Text(
+                    marker.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis, // Truncate if text is too long
+                  ),
+                ),
+                const Icon(
+                  Icons.location_on,
+                  color: Colors.redAccent,
+                  size: 40,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+  });
+}
+
+
+
 
 
 
@@ -281,13 +400,88 @@ void _showMarkerInfo(BuildContext context, MarkerData markerData) {
     });
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener((){
-      _searchPlaces(_searchController.text);
-    });
+@override
+void initState() {
+  super.initState();
+  _loadMarkers();
+}
+
+void _loadMarkers() async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    print("No user logged in. Cannot load markers.");
+    return;
   }
+
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('markers')
+        .get();
+
+    setState(() {
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        final markerData = MarkerData(
+          position: LatLng(data['latitude'], data['longitude']),
+          title: data['title'],
+          description: data['description'],
+        );
+
+        _markerData.add(markerData);
+        _markers.add(
+          Marker(
+            point: markerData.position,
+            width: 80,
+            height: 80,
+            child: GestureDetector(
+              onTap: () => _showMarkerInfo(context, markerData),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    constraints: const BoxConstraints(maxWidth: 80),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      markerData.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const Icon(
+                    Icons.location_on,
+                    color: Colors.redAccent,
+                    size: 40,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+    });
+    print("Markers loaded for the user");
+  } catch (e) {
+    print("Error loading markers: $e");
+  }
+}
+
 
 
   @override

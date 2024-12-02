@@ -1,5 +1,9 @@
+import 'dart:convert';  // For JSON parsing
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';  // Firebase Firestore
 import 'package:charts_flutter/flutter.dart' as charts;
+
+import 'reservoir.dart';  // For charts
 
 class HumidityCard extends StatefulWidget {
   const HumidityCard({super.key});
@@ -9,11 +13,48 @@ class HumidityCard extends StatefulWidget {
 }
 
 class _HumidityCardState extends State<HumidityCard> {
-  int _humidity = 60;
+  int _humidity = 0; // Default humidity value
 
-  void increaseHumidity() {
-    setState(() {
-      _humidity++;
+  @override
+  void initState() {
+    super.initState();
+    // Listen for real-time updates on the Firestore collection
+    _listenToHumidityData();
+  }
+
+  // Real-time listener for humidity data in Firestore
+  void _listenToHumidityData() {
+    FirebaseFirestore.instance
+        .collection('sensor_humidity')  // Your Firestore collection
+        .orderBy('timestamp', descending: true) // Order by timestamp
+        .limit(1)  // Limit to the most recent document
+        .snapshots()  // Real-time updates
+        .listen((querySnapshot) {
+      if (querySnapshot.docs.isNotEmpty) {
+        var docData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+
+        // Parse the humidity from the payload
+        var payload = docData['payload']; // This is the raw payload string
+        if (payload != null) {
+          // Decode the JSON string stored in the payload
+          var decodedJson = jsonDecode(payload); // Decode the string to a JSON object
+
+          // Extract humidity from the decoded JSON object
+          var humidity = decodedJson['humidity'];  
+          if (humidity != null) {
+            setState(() {
+              // If humidity is a number, use it directly
+              if (humidity is num) {
+                _humidity = humidity.toInt();  // Ensure it's an integer
+              } else {
+                _humidity = 0;  // Default to 0 if the data is not valid
+              }
+            });
+          }
+        }
+      } else {
+        print("No data found in Firestore");  // If no data is returned
+      }
     });
   }
 
@@ -22,7 +63,7 @@ class _HumidityCardState extends State<HumidityCard> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
+        Text(
           'Humidity',
           style: TextStyle(
             fontSize: 18,
@@ -41,7 +82,7 @@ class _HumidityCardState extends State<HumidityCard> {
               radius: 50,
               backgroundColor: Colors.blue,
               child: Text(
-                '$_humidity%',
+                '$_humidity%',  // Display humidity dynamically
                 style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -49,20 +90,6 @@ class _HumidityCardState extends State<HumidityCard> {
                 ),
               ),
             ),
-          ),
-        ),
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            elevation: 10,
-            backgroundColor: Colors.blue,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-          ),
-          onPressed: increaseHumidity,
-          child: const Text(
-            'Arroser',
-            style: TextStyle(color: Colors.white),
           ),
         ),
       ],
@@ -76,7 +103,6 @@ class HistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -112,7 +138,7 @@ class HistoryPage extends StatelessWidget {
     ];
 
     return [
-      charts.Series<HumidityData, String>(
+      charts.Series<HumidityData, String>( 
         id: 'Humidity',
         colorFn: (_, __) => charts.MaterialPalette.blue.shadeDefault,
         domainFn: (HumidityData humidity, _) => humidity.day,
@@ -122,6 +148,14 @@ class HistoryPage extends StatelessWidget {
     ];
   }
 }
+
+class HumidityData {
+  final String day;
+  final int value;
+
+  HumidityData(this.day, this.value);
+}
+
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
@@ -137,12 +171,6 @@ class SettingsPage extends StatelessWidget {
     );
   }
 }
-class HumidityData {
-  final String day;
-  final int value;
-
-  HumidityData(this.day, this.value);
-}
 
 class CptPage extends StatefulWidget {
   const CptPage({super.key});
@@ -154,10 +182,10 @@ class CptPage extends StatefulWidget {
 class _CptPageState extends State<CptPage> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
-    HumidityCard(),
-    HistoryPage(),
-    SettingsPage(),
+  static final List<Widget> _widgetOptions = <Widget>[
+    const HumidityCard(),
+    const HistoryPage(),
+    ReservoirPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -188,7 +216,7 @@ class _CptPageState extends State<CptPage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
-            label: 'Settings',
+            label: 'ReservoirPage',
           ),
         ],
         currentIndex: _selectedIndex,

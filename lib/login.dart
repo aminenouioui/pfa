@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
- 
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
- 
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
- 
+
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
- 
   final FirebaseAuth _auth = FirebaseAuth.instance;
- 
+
   // Login function with role-based navigation
   Future<void> _loginWithEmail() async {
     try {
@@ -23,20 +22,20 @@ class _LoginScreenState extends State<LoginScreen> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
- 
+
       // Retrieve user email
       final userEmail = userCredential.user?.email?.trim().toLowerCase();
- 
+
       // Query Firestore to find the user by email
       final querySnapshot = await FirebaseFirestore.instance
           .collection('users')
-          .where('email', isEqualTo: userEmail) // Match the email field
+          .where('email', isEqualTo: userEmail)
           .get();
- 
+
       if (querySnapshot.docs.isNotEmpty) {
-        final userDoc = querySnapshot.docs.first; // Get the first matching document
+        final userDoc = querySnapshot.docs.first;
         final role = userDoc.data()['role']; // Extract the role field
- 
+
         if (role == 'Admin') {
           // Navigate to admin screen
           Navigator.pushReplacementNamed(context, '/admin');
@@ -70,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     }
   }
- 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
               controller: passwordController,
               obscureText: true,
               decoration: InputDecoration(
-                hintText: '',
+                hintText: 'كلمة السر',
                 prefixIcon: const Icon(Icons.lock),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.visibility),

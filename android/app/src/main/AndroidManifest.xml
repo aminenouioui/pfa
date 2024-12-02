@@ -4,7 +4,8 @@
     <application
         android:label="pfa"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true"> <!-- Add this line -->
         <activity
             android:name="com.example.pfa.MainActivity"
             android:exported="true"
