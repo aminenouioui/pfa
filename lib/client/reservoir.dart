@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:projet/main.dart';
 
 class ReservoirPage extends StatefulWidget {
   @override
@@ -6,7 +8,14 @@ class ReservoirPage extends StatefulWidget {
 }
 
 class _RealReservoirPageState extends State<ReservoirPage> {
-  double waterPercentage = 75; // Example starting percentage.
+  double waterPercentage = 75; // Example starting percentage
+
+  // Function to show notification when water level is below 30%
+  void checkWaterLevelAndNotify() {
+    if (waterPercentage < 30) {
+      showNotification("Warning", "The water level is below 30%!");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,6 +85,8 @@ class _RealReservoirPageState extends State<ReservoirPage> {
                 setState(() {
                   waterPercentage = newValue;
                 });
+                // Check if water level is below 30% and show notification
+                checkWaterLevelAndNotify();
               },
             ),
           ],
@@ -83,5 +94,26 @@ class _RealReservoirPageState extends State<ReservoirPage> {
       ),
     );
   }
-}
 
+  // Function to show a notification
+  Future<void> showNotification(String title, String body) async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'channel_id', // Channel ID
+      'Reservoir Notifications', // Channel name
+      channelDescription: 'Notifications for the reservoir water level',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails platformDetails =
+        NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      0, // Notification ID
+      title, // Title
+      body, // Body
+      platformDetails, // Notification details
+      payload: 'Reservoir Level Below 30%', // Optional payload
+    );
+  }
+}
